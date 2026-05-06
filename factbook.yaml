@@ -237,3 +237,123 @@ content:
     - protocol-discipline
     - rfc-process
     - dogfood
+
+- id: f004
+  name: public-surface-voice-contract
+  summary: Public factlet-ai/* surfaces use research/documentation voice;
+    advisor/marketing/strategy voice belongs only in private kernora docs
+  category: engineering_rule
+  factlet_type: voice_contract
+  statement: |
+    Anything published to a factlet-ai/* repo (spec, evals, registry,
+    reference-sdk, factbook, factlet.ai website) MUST use research /
+    documentation voice — not advisor-to-founder voice, marketing voice,
+    or strategy meta-commentary. The same author writes both the public
+    factlet-ai surfaces AND the private kernora-internal docs; without
+    an explicit voice contract, internal voice leaks onto public
+    surfaces and damages credibility.
+
+    Verified by 2026-05-06 incident: across three scrub passes on the
+    public eval docs, residual advisor voice kept surfacing because the
+    author was paraphrasing the same shape with new words. The fix is
+    the contract below, not pattern-matching on specific phrases.
+  research_voice_rules: |
+    Public surfaces MUST:
+      - State what was measured
+      - State what was found (numbers, deltas, tables)
+      - State what limits apply
+      - Link the data
+      - Point at how to contribute or reproduce
+
+    Public surfaces MUST NOT:
+      - Tell the reader what they can or cannot claim
+        ("What you can say externally", "Defensible / Not defensible")
+      - Tell external press how to write about the project
+        ("Honest framing for re-distributors", "Don't put it in our mouths")
+      - Describe the project's own marketing position
+        ("the moat is X", "this hurts our marketing", "credibility move",
+         "sequenced credibility", "highest-leverage contribution")
+      - Editorialize importance
+        ("the substantive engineering finding worth taking forward",
+         "the most important issue", "the substantive finding worth reading")
+      - Use performative-honesty signals
+        ("transparency over result-quality", "construct-validity hole
+         acknowledged", "Known limitations (transparent)", "And why
+         that's deliberate — not laziness")
+      - Use internal-process narrative
+        ("A pre-implementation Principal Engineer review surfaced...",
+         "ship-gate", "internal sequencing")
+      - Preempt objections in advisor voice
+        ("A reader can object that...", "A sophisticated reader assumes...")
+      - Use instructional voice toward the reader
+        ("treat it as", "Do not extract", "you should...", "stop saying")
+      - Use venture-capital strategy vocabulary on research artifacts
+        ("moat", "wedge", "credibility taken", "marketing line")
+  banned_phrase_examples_2026_05_06: |
+    The following phrases were scrubbed across three passes today.
+    They are not the rule — they are evidence the rule exists. Future
+    failures will use different words for the same shape; the rule is
+    the shape, not the words:
+      - moat / isn't the moat / the real moat is...
+      - credibility move / credibility taken / sequenced credibility
+      - what you can say externally / Defensible vs Not defensible
+      - honest framing for re-distributors / Don't put it in our mouths
+      - the substantive (engineering )?finding worth (taking forward|reading)
+      - highest-leverage thing / contribution
+      - construct-validity (hole|gap) acknowledged
+      - the finding that hurts our marketing
+      - ship-gate
+      - the most important issue
+      - transparency over result-quality
+      - A reader can object that...
+      - And why that's deliberate — not laziness
+      - "a single-number marketing headline" (vs OK "single-number aggregate headline")
+  pre_commit_check: |
+    Before pushing any commit to a factlet-ai/* repo, the author SHOULD:
+      1. Read the diff with this lens: would a researcher write this?
+         Would a stranger reading this think they are being told what
+         to think or what to say?
+      2. If yes to either, rewrite to neutral research voice.
+      3. The rule is the SHAPE — telling the reader what to do/say/think,
+         editorializing importance, marketing-strategy meta-talk — not
+         the literal phrases listed above.
+    A regex/grep check on banned phrases is explicitly NOT the right
+    tool here because new failures use new words for the same shape.
+    The rule requires judgment, not pattern matching.
+  where_advisor_voice_belongs: |
+    Advisor voice, marketing voice, "moat", strategy meta-commentary,
+    "what we'd say externally" framing — all of these are appropriate
+    and useful in private kernora-internal docs:
+      - github.com/kernora-ai/kernora/docs/FACTLET-EVALS-INTERNAL-N6-ANALYSIS-MAY-5-2026.md
+      - github.com/kernora-ai/kernora/docs/Mihir-Review-Task-List.md
+      - github.com/kernora-ai/kernora/docs/FACTLET-EVALS-OUTREACH-TEMPLATE.md
+      - github.com/kernora-ai/kernora/docs/FACTLET-AI-BACKLOG.md
+    The contract is about WHERE the voice goes, not THAT advisor voice
+    is wrong. Advisor voice on a private internal doc is correct;
+    research voice on a public artifact is correct. Cross-contamination
+    in either direction is the error.
+  related_facts:
+    - "factlet-ai:f002 — co-located factbooks risk cross-contamination
+      (same shape: voice/scope confusion when surfaces share an author)"
+    - "kernora.ai (commercial product) uses sales/marketing voice; this
+      is correct on a sales surface and would be wrong on a research
+      surface."
+  sources:
+    - "incident:2026-05-06-public-eval-docs-leaked-advisor-voice-three-passes"
+    - "github.com/factlet-ai/evals/commits/main (commits 714aea1, 5aa2bf7, fb8e302 — three scrub passes)"
+    - "github.com/factlet-ai/factlet.ai/commits/main (commit 89a59c7 — website voice scrub)"
+  freshness:
+    extracted_at: '2026-05-06'
+    method: human_curated_after_incident
+  scope: project:factlet-ai
+  confidence: 0.95
+  status: approved
+  scope_level: project
+  project: factlet-ai
+  review_status: verified
+  tags:
+    - voice
+    - public-surface
+    - editorial-discipline
+    - prevention
+    - dogfood
