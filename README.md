@@ -6,7 +6,7 @@ This is **not** an example factbook. It's the real, live factbook that a session
 
 ## What's in here
 
-`factbook.yaml` — facts about:
+`factlet-ai-factbook.yaml` — facts about:
 - Deploy mechanics (Cloudflare Pages, GitHub integration, wrangler)
 - Public eval suite at [factlet-ai/evals](https://github.com/factlet-ai/evals)
 - Factbook scoping discipline (per Factlet Protocol v0.2 / RFC-001)
