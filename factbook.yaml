@@ -49,55 +49,65 @@ content:
 
 - id: f001
   name: factlet-ai-website-deploy-mechanics
-  summary: Direct git push to main on factlet-ai/factlet.ai does not reliably
-    trigger Cloudflare Pages auto-deploy; PR-merge or manual wrangler deploy required
+  summary: factlet.ai (Cloudflare Pages) was originally a Direct Upload project;
+    Direct Upload projects CANNOT be retroactively connected to Git. Migrated
+    2026-05-06 to a new git-connected project. Auto-deploy is now wired.
   category: engineering_rule
-  factlet_type: anti_pattern
+  factlet_type: lesson_learned
   statement: |
-    factlet.ai (the website) is hosted on Cloudflare Pages with a documented
-    GitHub auto-deploy integration ("Pushes to main auto-deploy" per the repo
-    README), but as of 2026-05-06 direct pushes to main from a non-PR workflow
-    do NOT reliably trigger production deploys. Verified by incident:
-    commits c8442a2 (feat(evals): /evals page + nav link + homepage eval section)
-    and 981b890 (fix(evals): add evals/index.html + redirect rule) were pushed
-    to factlet-ai/factlet.ai main, landed in git, but the production site at
-    factlet.ai/evals/ continued to serve the homepage 30+ minutes after push
-    while curl-direct file paths /evals.html and /evals/ both returned the
-    homepage <title>. Every prior commit on the repo (#2 through #9 by
-    mihir-kernora) reached production via PR-merge — direct-push commits
-    are observably absent from the deployed bundle.
-  workaround: |
-    Three options for deploying factlet.ai content:
-      (a) Open a GitHub PR with the changes and merge — historically works
-          (every prior production commit followed this path).
-      (b) Use wrangler CLI directly:
-            export CLOUDFLARE_API_TOKEN=<token>
-            cd <factlet.ai-repo-root>
-            wrangler pages deploy . --project-name=factlet-ai --branch=main
-          As of 2026-05-06, no CLOUDFLARE_API_TOKEN is in the kernora repo's
-          .env, and wrangler whoami returns "Not logged in". Operator must
-          provide auth.
-      (c) Cloudflare Pages dashboard → Workers & Pages → factlet-ai →
-          Deployments → "Retry deployment" or Settings → Git → reconnect
-          GitHub integration if it has been disconnected.
-    Default until investigated: route all factlet.ai content via PRs.
-  external_link_strategy: |
-    When kernora.ai or other surfaces need to link to eval methodology /
-    results, point at github.com/factlet-ai/evals (the GitHub repo URL —
-    serves markdown directly via GitHub's renderer) NOT factlet.ai/evals
-    (the Cloudflare-hosted URL) until the Cloudflare deploy is unblocked.
-    Revert the link to factlet.ai/evals once production is current.
+    factlet.ai (the website) is hosted on Cloudflare Pages. Originally created
+    as a Direct Upload project (someone deployed via wrangler or dashboard
+    drag-and-drop), so the README's claim "Pushes to main auto-deploy via
+    the Cloudflare Pages git integration" was aspirational — Direct Upload
+    projects in Cloudflare Pages CANNOT be retroactively connected to Git
+    (no "Connect to Git" option appears in Settings; verified empirically
+    2026-05-06). All deploys had to be manual via wrangler or dashboard
+    upload, despite the README claim and despite multiple direct pushes
+    landing in git but not deploying.
+
+    RESOLVED 2026-05-06 by migration:
+      1. Created NEW Pages project (`factlet-ai`) connected to git
+      2. New project auto-deployed on first push to
+         factlet-ai.choudharymihir.workers.dev (its workers.dev URL)
+      3. Removed `factlet.ai` custom domain from old Direct Upload project
+      4. Added `factlet.ai` custom domain to new git-connected project
+      5. Verified factlet.ai/ + factlet.ai/evals/ serve current main
+
+    Old Direct Upload project retained briefly as rollback safety net;
+    delete after 24-48 hours of clean operation on the new project.
+  current_state: |
+    As of 2026-05-06 ~14:00 PT: factlet.ai is served by a git-connected
+    Cloudflare Pages project. ANY push to factlet-ai/factlet.ai main
+    auto-deploys within ~60s. The README's claim is now accurate.
+    No CLOUDFLARE_API_TOKEN is required for routine deploys.
+  why_initial_setup_was_wrong: |
+    Whoever first created the Cloudflare Pages project chose Direct Upload
+    (the easier option for a one-time deploy). Once chosen, Direct Upload
+    is immutable — the project cannot be converted to git-connected. This
+    is a Cloudflare platform limitation, not a misconfiguration. The
+    aspirational README line was written assuming git integration WOULD
+    be set up later but never was, until the 2026-05-06 incident forced it.
+  prevention: |
+    For any new Cloudflare Pages project (factlet-ai/* or kernora-ai/*),
+    ALWAYS choose "Connect to Git" at project creation, never "Direct
+    Upload." Direct Upload is one-way; Git Connection is reversible.
+    If you find yourself reaching for `wrangler pages deploy <dir>` from
+    a local machine on a project that should track a git branch — STOP
+    and check whether the project is Direct Upload. If yes, plan a
+    migration before deploying further changes.
   related_facts:
-    - "kernora:f??? — kernora.ai (Firebase Hosting) requires manual `firebase deploy --only hosting`; no auto-deploy on git push. Different vendor, similar manual-deploy reality."
+    - "kernora:f??? — kernora.ai (Firebase Hosting) requires manual `firebase deploy --only hosting`; no git auto-deploy. Different vendor, similar gap to fix later."
+    - "factlet-ai:f003 — single-author admin-merge governance (used during today's incident triage)"
   sources:
-    - "github.com/factlet-ai/factlet.ai/commits/main (commits c8442a2, 981b890)"
-    - "incident:2026-05-06-factlet-cloudflare-deploy-stuck"
-    - "github.com/factlet-ai/factlet.ai/README.md (claims 'Pushes to main auto-deploy via the Cloudflare Pages git integration')"
+    - "incident:2026-05-06-factlet-cloudflare-deploy-stuck (resolved)"
+    - "github.com/factlet-ai/factlet.ai/commits/main"
+    - "Cloudflare Pages docs: Direct Upload projects cannot be linked to a Git repository post-creation"
   freshness:
     extracted_at: '2026-05-06'
+    updated_at: '2026-05-06T20:30Z'
     method: human_curated
   scope: project:factlet-ai
-  confidence: 0.85
+  confidence: 1.0
   status: approved
   scope_level: project
   project: factlet-ai
@@ -106,8 +116,9 @@ content:
     - deployment
     - cloudflare-pages
     - github
-    - operational-gotcha
+    - resolved
     - factlet-ai
+    - prevention
 
 - id: f002
   name: factbook-scope-isolation
