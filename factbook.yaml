@@ -1,0 +1,165 @@
+factbook_protocol: '0.2-draft'
+id: f1ac7e5b9d62a04183cf
+name: Factlet-AI — Operational Factbook (the project's own factbook, dogfooded)
+pack_type: project
+scope: project:factlet-ai
+version: 0.2.0
+version_hash: pending
+summary: |
+  Operational + decision facts for the factlet-ai GitHub org and the factlet.ai
+  website. This is the factlet-ai project's OWN factbook — eaten as dogfood,
+  hosted as a separate repo (per the v0.2 scoping discipline) to prevent
+  cross-contamination with the Kernora project factbook.
+
+  Distinct from:
+    - .nora/kernora-factbook.yaml in github.com/kernora-ai/kernora (private,
+      scope=project:kernora — the commercial Kernora product)
+    - Per-team example factbooks at factlet-ai/registry (payments / frontend /
+      ml-pipeline — illustrative, not operational)
+
+  This factbook covers: deploy mechanics for factlet.ai (Cloudflare Pages),
+  the public eval suite at github.com/factlet-ai/evals, the open Factlet
+  Protocol spec, factbook scoping discipline (v0.2), and the relationship to
+  Kernora as the reference implementation.
+
+  CONSUME THIS BEFORE pushing to any factlet-ai/* repo, editing factlet.ai
+  website content, or making cross-claims that touch both kernora.ai and
+  factlet.ai.
+
+tags:
+- project
+- factlet-protocol
+- open-spec
+- evals
+- dogfood
+
+lifecycle:
+  protocol: '1.2'
+  mode: live-growing
+  updated_at: '2026-05-06'
+  scope_discipline: |
+    Per Factlet Protocol v0.2 (RFC-001 in factlet-ai/spec): all fact IDs in
+    this file are interpreted by external citers as `factlet-ai:<id>`
+    (prepending the scope from the file-level `scope:` field). The bare `id`
+    field uses the legacy form (`f001`) for backward compatibility, but
+    callers MUST cite the prefixed form when referencing facts from this
+    factbook in code, prose, or other factbooks.
+
+content:
+
+- id: f001
+  name: factlet-ai-website-deploy-mechanics
+  summary: Direct git push to main on factlet-ai/factlet.ai does not reliably
+    trigger Cloudflare Pages auto-deploy; PR-merge or manual wrangler deploy required
+  category: engineering_rule
+  factlet_type: anti_pattern
+  statement: |
+    factlet.ai (the website) is hosted on Cloudflare Pages with a documented
+    GitHub auto-deploy integration ("Pushes to main auto-deploy" per the repo
+    README), but as of 2026-05-06 direct pushes to main from a non-PR workflow
+    do NOT reliably trigger production deploys. Verified by incident:
+    commits c8442a2 (feat(evals): /evals page + nav link + homepage eval section)
+    and 981b890 (fix(evals): add evals/index.html + redirect rule) were pushed
+    to factlet-ai/factlet.ai main, landed in git, but the production site at
+    factlet.ai/evals/ continued to serve the homepage 30+ minutes after push
+    while curl-direct file paths /evals.html and /evals/ both returned the
+    homepage <title>. Every prior commit on the repo (#2 through #9 by
+    mihir-kernora) reached production via PR-merge — direct-push commits
+    are observably absent from the deployed bundle.
+  workaround: |
+    Three options for deploying factlet.ai content:
+      (a) Open a GitHub PR with the changes and merge — historically works
+          (every prior production commit followed this path).
+      (b) Use wrangler CLI directly:
+            export CLOUDFLARE_API_TOKEN=<token>
+            cd <factlet.ai-repo-root>
+            wrangler pages deploy . --project-name=factlet-ai --branch=main
+          As of 2026-05-06, no CLOUDFLARE_API_TOKEN is in the kernora repo's
+          .env, and wrangler whoami returns "Not logged in". Operator must
+          provide auth.
+      (c) Cloudflare Pages dashboard → Workers & Pages → factlet-ai →
+          Deployments → "Retry deployment" or Settings → Git → reconnect
+          GitHub integration if it has been disconnected.
+    Default until investigated: route all factlet.ai content via PRs.
+  external_link_strategy: |
+    When kernora.ai or other surfaces need to link to eval methodology /
+    results, point at github.com/factlet-ai/evals (the GitHub repo URL —
+    serves markdown directly via GitHub's renderer) NOT factlet.ai/evals
+    (the Cloudflare-hosted URL) until the Cloudflare deploy is unblocked.
+    Revert the link to factlet.ai/evals once production is current.
+  related_facts:
+    - "kernora:f??? — kernora.ai (Firebase Hosting) requires manual `firebase deploy --only hosting`; no auto-deploy on git push. Different vendor, similar manual-deploy reality."
+  sources:
+    - "github.com/factlet-ai/factlet.ai/commits/main (commits c8442a2, 981b890)"
+    - "incident:2026-05-06-factlet-cloudflare-deploy-stuck"
+    - "github.com/factlet-ai/factlet.ai/README.md (claims 'Pushes to main auto-deploy via the Cloudflare Pages git integration')"
+  freshness:
+    extracted_at: '2026-05-06'
+    method: human_curated
+  scope: project:factlet-ai
+  confidence: 0.85
+  status: approved
+  scope_level: project
+  project: factlet-ai
+  review_status: verified
+  tags:
+    - deployment
+    - cloudflare-pages
+    - github
+    - operational-gotcha
+    - factlet-ai
+
+- id: f002
+  name: factbook-scope-isolation
+  summary: Factbooks for distinct projects MUST live in physically separate
+    repos AND use scoped fact-id citations to prevent LLM cross-contamination
+  category: engineering_rule
+  factlet_type: anti_pattern
+  statement: |
+    When two factbooks for distinct projects are co-located in the same
+    git repo (e.g. .nora/kernora-factbook.yaml AND .nora/factlet-factbook.yaml
+    in github.com/kernora-ai/kernora), an LLM consuming both into the same
+    context window can confuse fact origin, apply project-A rules to project-B
+    work, and miscite IDs that collide across files (both factbooks
+    independently number f001, f002...). Verified empirically 2026-05-06:
+    in a single session the factlet-factbook was authored INTO the kernora
+    repo (wrong location), and an external CTA on kernora.ai pointed at
+    factlet.ai/evals (which had not deployed) instead of the working
+    GitHub URL — both errors traceable to insufficient scope demarcation
+    between the two projects' truth.
+  rule: |
+    A factbook for `project:X` MUST live in a repo physically separate from
+    factbooks for `project:Y` — typically the project's own repo
+    (factlet-ai/factbook for project:factlet-ai; kernora-ai/kernora's .nora/
+    for project:kernora). Co-location in a single repo is permitted ONLY
+    when both factbooks share the same scope (e.g. project:kernora has
+    kernora-factbook.yaml + lite-mode-factbook.yaml, both project:kernora).
+  citation_rule: |
+    External references to facts in this factbook MUST use the
+    `<scope>:<id>` prefix form — `factlet-ai:f001`, NOT bare `f001`. Inside
+    this factbook file, the bare `id` form is permitted because the
+    file-level `scope:` field provides the prefix unambiguously. This
+    citation rule is being submitted as RFC-001 against the v0.2 spec.
+  remediation_taken_2026_05_06:
+    - "Created github.com/factlet-ai/factbook as canonical home for project:factlet-ai facts"
+    - "Migrated factlet-factbook content from kernora repo to new factbook repo"
+    - "Tombstoned kernora-side .nora/factlet-factbook.yaml with redirect note"
+    - "Updated CLAUDE.md in kernora repo to point at new location"
+    - "Filed RFC-001 against factlet-ai/spec proposing scoped-id citation rule for v0.2"
+  sources:
+    - "incident:2026-05-06-factbook-cross-contamination-near-miss"
+    - "github.com/factlet-ai/spec/blob/main/rfcs/0001-scoped-fact-ids.md"
+  freshness:
+    extracted_at: '2026-05-06'
+    method: human_curated
+  scope: project:factlet-ai
+  confidence: 0.95
+  status: approved
+  scope_level: project
+  project: factlet-ai
+  review_status: verified
+  tags:
+    - factbook-discipline
+    - scope-isolation
+    - protocol-evolution
+    - dogfood
