@@ -163,3 +163,66 @@ content:
     - scope-isolation
     - protocol-evolution
     - dogfood
+
+- id: f003
+  name: rfc-governance-two-eyes-rule
+  summary: Once external implementers exist, RFCs against factlet-ai/spec
+    MUST be approved by at least one non-author reviewer before admin merge
+  category: engineering_rule
+  factlet_type: governance
+  statement: |
+    RFC PRs against factlet-ai/spec (and behavior-affecting PRs against
+    reference-sdk, evals, registry) MUST receive at least one approving
+    review from a contributor who is NOT the author before being merged
+    to main. This is the standard "two eyes" rule for protocol governance.
+
+    Exception during single-author stage (current as of 2026-05-06): if
+    the author is the sole active contributor to factlet-ai/* and the
+    work is genuinely time-sensitive (e.g. a fix needed to unblock a
+    launch), admin-merge with author-self-approval is permitted and the
+    PR description MUST note "single-author admin-merge" so the audit
+    trail is honest.
+
+    Verified 2026-05-06: spec PR-4 (RFC-001), reference-sdk PR-5
+    (validate strict_scoping), and registry PR-4 (payments scope demo)
+    were all admin-merged by the same author who opened them. Acceptable
+    under single-author exception; will not be acceptable once a second
+    contributor exists.
+  trigger_for_two_eyes_enforcement: |
+    The two-eyes rule activates when ANY of these is true:
+      (a) a non-mihirchoudhary contributor has merged at least one PR
+          to a factlet-ai/* repo, OR
+      (b) the spec has reached v0.2 RC status (close to public adoption), OR
+      (c) any factlet-ai repo has surpassed 50 stars (proxy for external
+          interest sufficient that public review is expected).
+    Until any of those, single-author admin-merge with the disclosed
+    audit-trail note is permitted.
+  enforcement_path: |
+    When the trigger fires:
+      - Update factlet-ai/spec/CONTRIBUTING.md to require an approving
+        review from a non-author for RFC merges.
+      - Apply branch protection rule "Require pull request reviews
+        before merging — required approvers: 1, dismiss stale: yes,
+        author cannot approve" on factlet-ai/spec main.
+      - Apply same on reference-sdk + evals + registry mains.
+      - Disable admin override OR require it to be explicitly logged in
+        the merge commit message.
+  sources:
+    - "github.com/factlet-ai/spec/pull/4 (RFC-001 — admin-merged 565fc81)"
+    - "github.com/factlet-ai/reference-sdk/pull/5 (validate — admin-merged e576eb5)"
+    - "github.com/factlet-ai/registry/pull/4 (scope demo — admin-merged f4e218d)"
+    - "incident:2026-05-06-self-approved-protocol-rfc-merge"
+  freshness:
+    extracted_at: '2026-05-06'
+    method: human_curated
+  scope: project:factlet-ai
+  confidence: 0.95
+  status: approved
+  scope_level: project
+  project: factlet-ai
+  review_status: verified
+  tags:
+    - governance
+    - protocol-discipline
+    - rfc-process
+    - dogfood
